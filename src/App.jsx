@@ -81,19 +81,34 @@ const analyzePrintQuality = async (originalFile, sampleFile) => {
     }
 
     const genAI = new GoogleGenerativeAI(API_KEY);
-    // Usamos la versión específica 001 que es más robusta
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const originalPart = await fileToPart(originalFile);
     const samplePart = await fileToPart(sampleFile);
 
-    const result = await model.generateContent([
-      SYSTEM_PROMPT,
-      "IMAGEN A (Referencia):",
-      originalPart,
-      "IMAGEN B (Muestra Impresa):",
-      samplePart
-    ]);
+    let result;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+      try {
+        result = await model.generateContent([
+          SYSTEM_PROMPT,
+          "IMAGEN A (Referencia):",
+          originalPart,
+          "IMAGEN B (Muestra Impresa):",
+          samplePart
+        ]);
+        break; // Éxito
+      } catch (error) {
+        if (error.message.includes("429") && attempts < maxAttempts - 1) {
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 5000)); // Esperar 5s
+          continue;
+        }
+        throw error; // Relanzar si no es 429 o se acabaron los intentos
+      }
+    }
 
     const response = await result.response;
     const text = response.text();
