@@ -82,7 +82,7 @@ const analyzePrintQuality = async (originalFile, sampleFile) => {
 
     const genAI = new GoogleGenerativeAI(API_KEY);
     // Usamos la versión específica 001 que es más robusta
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
 
     const originalPart = await fileToPart(originalFile);
     const samplePart = await fileToPart(sampleFile);
